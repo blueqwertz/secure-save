@@ -37,13 +37,9 @@ def decrypt(key, source, decode=True):
 
 
 def append_key(key, value):
-    data["vault"][encrypt(my_password, name.encode())] = encrypt(my_password, value.encode())
+    data["vault"][encrypt(my_password, key.encode())] = encrypt(my_password, value.encode())
     with open("vault.json", "w") as outfile:
         json.dump(data, outfile, indent=4)
-
-
-def load_key(key):
-    return None
 
 
 data = json.load(open("vault.json"))
@@ -59,7 +55,8 @@ else:
     json.dump(data, open("vault.json", "w"), indent=4)
 
 print("commands: store, load, delete, quit")
-print("You have {0} keys in your vault".format(len(data["vault"])))
+print("You have {0} {1} in your vault".format(len(data["vault"]), "key" if len(data["vault"]) == 1 else "keys"))
+
 while True:
     command = input("secure-save> ").strip()
     if '"' in command:
@@ -73,9 +70,10 @@ while True:
             print("usage: store <name> <password>")
             continue
         name, password = command[1:]
-        if load_key(name):
-            if input("Key already exists. Overwrite? (y/n) ").lower() != "y":
-                continue
+        for key in data["vault"].keys():
+            if decrypt(key, data["vault"][key]) == name.encode():
+                if input("Key already exists. Overwrite? (y/n) ").lower() != "y":
+                    continue
         append_key(name, password)
     elif command[0] == "load":
         if len(command) != 1:
